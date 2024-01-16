@@ -5,6 +5,11 @@ import librosa
 from functools import lru_cache
 import time
 
+import redis
+
+redis_client = redis.Redis(host='localhost', port=6379, db=0)
+channel_name = "whisper_data"
+
 
 
 @lru_cache
@@ -278,8 +283,17 @@ class OnlineASRProcessor:
         self.transcript_buffer.insert(tsw, self.buffer_time_offset)
         o = self.transcript_buffer.flush()
         self.commited.extend(o)
-        print(">>>>COMPLETE NOW:",self.to_flush(o),file=self.logfile,flush=True)
-        print("INCOMPLETE:",self.to_flush(self.transcript_buffer.complete()),file=self.logfile,flush=True)
+        tmp_to_flush = self.to_flush(o)
+        def format_parse(t):
+            return {
+                "start": t[0]/1000,
+                "end": t[1]/1000,
+                "text": t[2]
+            }
+        if tmp_to_flush[0] != None:
+            redis_client.publish(channel_name, json.dumps(format_parse(tmp_to_flush)))
+        print(">>>>COMPLETE NOW:",tmp_to_flush,file=self.logfile,flush=True)
+#        print("INCOMPLETE:",self.to_flush(self.transcript_buffer.complete()),file=self.logfile,flush=True)
 
         # there is a newly confirmed text
 
@@ -303,10 +317,10 @@ class OnlineASRProcessor:
             #while k>0 and self.commited[k][1] > l:
             #    k -= 1
             #t = self.commited[k][1] 
-            print(f"chunking segment",file=self.logfile)
+#            print(f"chunking segment",file=self.logfile)
             #self.chunk_at(t)
 
-        print(f"len of buffer now: {len(self.audio_buffer)/self.SAMPLING_RATE:2.2f}",file=self.logfile)
+ #       print(f"len of buffer now: {len(self.audio_buffer)/self.SAMPLING_RATE:2.2f}",file=self.logfile)
         return self.to_flush(o)
 
     def chunk_completed_sentence(self):
@@ -322,7 +336,7 @@ class OnlineASRProcessor:
         # we will continue with audio processing at this timestamp
         chunk_at = sents[-2][1]
 
-        print(f"--- sentence chunked at {chunk_at:2.2f}",file=self.logfile)
+ #       print(f"--- sentence chunked at {chunk_at:2.2f}",file=self.logfile)
         self.chunk_at(chunk_at)
 
     def chunk_completed_segment(self, res):
@@ -406,8 +420,8 @@ class OnlineASRProcessor:
             b = None
             e = None
         else:
-            b = offset + sents[0][0]
-            e = offset + sents[-1][1]
+            b = (offset + sents[0][0])
+            e = (offset + sents[-1][1])
         return (b,e,t)
 
 WHISPER_LANG_CODES = "af,am,ar,as,az,ba,be,bg,bn,bo,br,bs,ca,cs,cy,da,de,el,en,es,et,eu,fa,fi,fo,fr,gl,gu,ha,haw,he,hi,hr,ht,hu,hy,id,is,it,ja,jw,ka,kk,km,kn,ko,la,lb,ln,lo,lt,lv,mg,mi,mk,ml,mn,mr,ms,mt,my,ne,nl,nn,no,oc,pa,pl,ps,pt,ro,ru,sa,sd,si,sk,sl,sn,so,sq,sr,su,sv,sw,ta,te,tg,th,tk,tl,tr,tt,uk,ur,uz,vi,yi,yo,zh".split(",")
