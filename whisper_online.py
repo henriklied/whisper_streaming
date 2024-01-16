@@ -125,7 +125,7 @@ class FasterWhisperASR(ASRBase):
 
     def transcribe(self, audio, init_prompt=""):
         # tested: beam_size=5 is faster and better than 1 (on one 200 second document from En ESIC, min chunk 0.01)
-        segments, info = self.model.transcribe(audio, language=self.original_language, initial_prompt=init_prompt, beam_size=5, word_timestamps=True, condition_on_previous_text=True, **self.transcribe_kargs)
+        segments, info = self.model.transcribe(audio, initial_prompt=init_prompt, beam_size=5, word_timestamps=True, condition_on_previous_text=True, **self.transcribe_kargs)
         return list(segments)
 
     def ts_words(self, segments):
