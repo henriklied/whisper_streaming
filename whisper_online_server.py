@@ -136,6 +136,7 @@ class ServerProcessor:
                 break
             sf = soundfile.SoundFile(io.BytesIO(raw_bytes), channels=1,endian="LITTLE",samplerate=SAMPLING_RATE, subtype="PCM_16",format="RAW")
             audio, _ = librosa.load(sf,sr=SAMPLING_RATE)
+            print("Length of out buffer is now", len(out))
             out.append(audio)
         if not out:
             return None
