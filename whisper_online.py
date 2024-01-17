@@ -275,6 +275,8 @@ class OnlineASRProcessor:
         prompt, non_prompt = self.prompt()
         print("PROMPT:", prompt, file=self.logfile)
         print("CONTEXT:", non_prompt, file=self.logfile)
+        max_audio_length = 25  # Maximum desired audio length in seconds
+        self.audio_buffer = self.audio_buffer[-int(max_audio_length * self.SAMPLING_RATE):]
         print(f"transcribing {len(self.audio_buffer)/self.SAMPLING_RATE:2.2f} seconds from {self.buffer_time_offset:2.2f}",file=self.logfile)
         res = self.asr.transcribe(self.audio_buffer, init_prompt=prompt)
 
