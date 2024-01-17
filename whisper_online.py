@@ -280,6 +280,7 @@ class OnlineASRProcessor:
         print(f"transcribing {len(self.audio_buffer)/self.SAMPLING_RATE:2.2f} seconds from {self.buffer_time_offset:2.2f}",file=self.logfile)
         res, info = self.asr.transcribe(self.audio_buffer, init_prompt=prompt)
         if (info.duration_after_vad == info.duration) and info.duration_after_vad < 1.5:
+            print("Clearing buffer. duration_after_vad was", info.duration_after_vad)
             self.audio_buffer = []
 
         # transform to [(beg,end,"word1"), ...]
