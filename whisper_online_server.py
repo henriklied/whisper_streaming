@@ -38,10 +38,10 @@ else:
 asr = asr_cls(modelsize=size, lan=language, cache_dir=args.model_cache_dir, model_dir=args.model_dir)
 
 if args.task == "translate":
-    asr.set_translate_task()
-    tgt_language = "en"
+#    asr.set_translate_task()
+    tgt_language = "no"
 else:
-    tgt_language = language
+    tgt_language = "no" #language
 
 e = time.time()
 print(f"done. It took {round(e-t,2)} seconds.",file=sys.stderr)
