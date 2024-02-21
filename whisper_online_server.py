@@ -59,7 +59,6 @@ if args.buffer_trimming == "sentence":
     tokenizer = create_tokenizer(tgt_language)
 else:
     tokenizer = None
-online = OnlineASRProcessor(asr,tokenizer,buffer_trimming=(args.buffer_trimming, args.buffer_trimming_sec))
 
 
 
@@ -211,11 +210,11 @@ logging.basicConfig(level=level, format='whisper-server-%(levelname)s: %(message
 # server loop
 
 class ClientThread(threading.Thread):
-    def __init__(self, conn, addr, online, min_chunk):
+    def __init__(self, conn, addr, asr, min_chunk, args, tokenizer):
         super().__init__()
         self.conn = conn
         self.addr = addr
-        self.online = online
+        self.online = OnlineASRProcessor(asr,tokenizer,buffer_trimming=(args.buffer_trimming, args.buffer_trimming_sec))
         self.min_chunk = min_chunk
 
     def run(self):
@@ -227,7 +226,7 @@ class ClientThread(threading.Thread):
         self.conn.close()
         logging.info('INFO: Connection to client closed')
 
-def start_server(host, port, online, min_chunk):
+def start_server(host, port, asr, min_chunk, args, tokenizer):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind((host, port))
         s.listen(5) # Listen for multiple connections, not just 1
@@ -236,7 +235,7 @@ def start_server(host, port, online, min_chunk):
         try:
             while True:
                 conn, addr = s.accept()
-                new_thread = ClientThread(conn, addr, online, min_chunk)
+                new_thread = ClientThread(conn, addr, asr, min_chunk, args, tokenizer)
                 new_thread.start()
         except KeyboardInterrupt:
             logging.info('INFO: Server is shutting down')
@@ -245,4 +244,4 @@ def start_server(host, port, online, min_chunk):
             logging.info('INFO: Connection closed, terminating.')
 
 # Replace 'args.host', 'args.port', 'online', and 'min_chunk' with the actual values or ways to obtain them
-start_server(args.host, args.port, online, min_chunk)
+start_server(args.host, args.port, asr, min_chunk, args, tokenizer)
