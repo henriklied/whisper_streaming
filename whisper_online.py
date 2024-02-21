@@ -267,7 +267,7 @@ class OnlineASRProcessor:
         non_prompt = self.commited[k:]
         return self.asr.sep.join(prompt[::-1]), self.asr.sep.join(t for _,_,t in non_prompt)
 
-    def process_iter(self):
+    def process_iter(self, metadata):
         """Runs on the current audio buffer.
         Returns: a tuple (beg_timestamp, end_timestamp, "text"), or (None, None, ""). 
         The non-emty text is confirmed (committed) partial transcript.
@@ -291,11 +291,12 @@ class OnlineASRProcessor:
         o = self.transcript_buffer.flush()
         self.commited.extend(o)
         tmp_to_flush = self.to_flush(o)
-        def format_parse(t):
+        def format_parse(t, metadata):
             return {
                 "start": t[0]/1000,
                 "end": t[1]/1000,
-                "text": t[2]
+                "text": t[2],
+                "channel": metadata,
             }
         if tmp_to_flush[0] != None:
             redis_client.publish(channel_name, json.dumps(format_parse(tmp_to_flush)))
