@@ -299,7 +299,7 @@ class OnlineASRProcessor:
                 "channel": metadata,
             }
         if tmp_to_flush[0] != None:
-            redis_client.publish(channel_name, json.dumps(format_parse(tmp_to_flush)))
+            redis_client.publish(channel_name, json.dumps(format_parse(tmp_to_flush, metadata)))
         print(">>>>COMPLETE NOW:",tmp_to_flush,file=self.logfile,flush=True)
 #        print("INCOMPLETE:",self.to_flush(self.transcript_buffer.complete()),file=self.logfile,flush=True)
 
