@@ -90,8 +90,11 @@ class Connection:
     def __init__(self, conn):
         self.conn = conn
         self.last_line = ""
+        self.metadata = None
 
         self.conn.setblocking(True)
+        self.read_metadata()
+
 
     def send(self, line):
         '''it doesn't send the same line twice, because it was problematic in online-text-flow-events'''
@@ -103,6 +106,12 @@ class Connection:
     def receive_lines(self):
         in_line = line_packet.receive_lines(self.conn)
         return in_line
+
+    def read_metadata(self):
+        '''Read the first line of the connection as metadata'''
+        metadata_line = self.conn.recv(self.PACKET_SIZE).decode().splitlines()[0]
+        self.metadata = metadata_line.strip()  # Assuming metadata is a single line
+        logging.info(f'Metadata received: {self.metadata}')
 
     def non_blocking_receive_audio(self):
         r = self.conn.recv(self.PACKET_SIZE)
@@ -208,6 +217,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         conn, addr = s.accept()
         logging.info('INFO: Connected to client on {}'.format(addr))
         connection = Connection(conn)
+        logging.info(f'Received ID: {connection.metadata}')
         proc = ServerProcessor(connection, online, min_chunk)
         proc.process()
         conn.close()
