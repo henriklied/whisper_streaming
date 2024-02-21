@@ -190,7 +190,7 @@ class ServerProcessor:
                 print("break here",file=sys.stderr)
                 break
             self.online_asr_proc.insert_audio_chunk(a)
-            o = online.process_iter(self.connection.metadata)
+            o = self.online_asr_proc.process_iter(self.connection.metadata)
             try:
                 self.send_result(o)
             except BrokenPipeError:
