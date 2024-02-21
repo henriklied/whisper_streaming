@@ -4,6 +4,8 @@ from whisper_online import *
 import sys
 import argparse
 import os
+import threading
+
 parser = argparse.ArgumentParser()
 
 # server options
@@ -208,18 +210,39 @@ logging.basicConfig(level=level, format='whisper-server-%(levelname)s: %(message
 
 # server loop
 
-with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.bind((args.host, args.port))
-    s.listen(1)
-    logging.info('INFO: Listening on'+str((args.host, args.port)))
-    while True:
-        conn, addr = s.accept()
-        logging.info('INFO: Connected to client on {}'.format(addr))
-        connection = Connection(conn)
+class ClientThread(threading.Thread):
+    def __init__(self, conn, addr, online, min_chunk):
+        super().__init__()
+        self.conn = conn
+        self.addr = addr
+        self.online = online
+        self.min_chunk = min_chunk
+
+    def run(self):
+        logging.info('INFO: Connected to client on {}'.format(self.addr))
+        connection = Connection(self.conn)
         logging.info(f'Received ID: {connection.metadata}')
-        proc = ServerProcessor(connection, online, min_chunk)
+        proc = ServerProcessor(connection, self.online, self.min_chunk)
         proc.process()
-        conn.close()
+        self.conn.close()
         logging.info('INFO: Connection to client closed')
-logging.info('INFO: Connection closed, terminating.')
+
+def start_server(host, port, online, min_chunk):
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind((host, port))
+        s.listen(5) # Listen for multiple connections, not just 1
+        logging.info(f'INFO: Listening on {(host, port)}')
+        
+        try:
+            while True:
+                conn, addr = s.accept()
+                new_thread = ClientThread(conn, addr, online, min_chunk)
+                new_thread.start()
+        except KeyboardInterrupt:
+            logging.info('INFO: Server is shutting down')
+        finally:
+            s.close()
+            logging.info('INFO: Connection closed, terminating.')
+
+# Replace 'args.host', 'args.port', 'online', and 'min_chunk' with the actual values or ways to obtain them
+start_server(args.host, args.port, online, min_chunk)
