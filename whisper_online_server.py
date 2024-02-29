@@ -188,13 +188,13 @@ class ServerProcessor:
             a = self.receive_audio_chunk()
             if a is None:
                 print("break here",file=sys.stderr)
-                break
+                continue
             self.online_asr_proc.insert_audio_chunk(a)
             o = self.online_asr_proc.process_iter(self.connection.metadata)
             try:
                 self.send_result(o)
             except BrokenPipeError:
-                print("broken pipe -- connection closed?",file=sys.stderr)
+                logging.info("broken pipe -- connection closed?")
                 break
 
 #        o = online.finish()  # this should be working
@@ -223,6 +223,7 @@ class ClientThread(threading.Thread):
         logging.info(f'Received ID: {connection.metadata}')
         proc = ServerProcessor(connection, self.online, self.min_chunk)
         proc.process()
+        logging.info("CLOSING CONNECTION!")
         self.conn.close()
         logging.info('INFO: Connection to client closed')
 
@@ -240,8 +241,8 @@ def start_server(host, port, asr, min_chunk, args, tokenizer):
         except KeyboardInterrupt:
             logging.info('INFO: Server is shutting down')
         finally:
-            s.close()
             logging.info('INFO: Connection closed, terminating.')
+            s.close()
 
 # Replace 'args.host', 'args.port', 'online', and 'min_chunk' with the actual values or ways to obtain them
 start_server(args.host, args.port, asr, min_chunk, args, tokenizer)
