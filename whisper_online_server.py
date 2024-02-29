@@ -132,6 +132,7 @@ class ServerProcessor:
         self.connection = c
         self.online_asr_proc = online_asr_proc
         self.min_chunk = min_chunk
+        self.many_nones = 0
 
         self.last_end = None
 
@@ -190,6 +191,9 @@ class ServerProcessor:
             a = self.receive_audio_chunk()
             if a is None:
                 logging.info("break here")
+                self.many_nones += 1
+                if self.many_nones > 50:
+                    break
                 continue
             self.online_asr_proc.insert_audio_chunk(a)
             o = self.online_asr_proc.process_iter(self.connection.metadata)
