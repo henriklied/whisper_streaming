@@ -15,7 +15,7 @@ channel_name = "whisper_data"
 
 @lru_cache
 def load_audio(fname):
-    a, _ = librosa.load(fname, sr=16000)
+    a, _ = librosa.load(fname, sr=16000, dtype=np.float32)
     return a
 
 def load_audio_chunk(fname, beg, end):

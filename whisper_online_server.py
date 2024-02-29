@@ -6,6 +6,8 @@ import argparse
 import os
 import threading
 
+import numpy as np
+
 parser = argparse.ArgumentParser()
 
 # server options
@@ -145,7 +147,7 @@ class ServerProcessor:
             if not raw_bytes:
                 break
             sf = soundfile.SoundFile(io.BytesIO(raw_bytes), channels=1,endian="LITTLE",samplerate=SAMPLING_RATE, subtype="PCM_16",format="RAW")
-            audio, _ = librosa.load(sf,sr=SAMPLING_RATE)
+            audio, _ = librosa.load(sf,sr=SAMPLING_RATE, dtype=np.float32)
             print("Length of out buffer is now", len(out))
             out.append(audio)
         if not out:
