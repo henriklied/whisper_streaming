@@ -187,7 +187,7 @@ class ServerProcessor:
         while True:
             a = self.receive_audio_chunk()
             if a is None:
-                print("break here",file=sys.stderr)
+                logging.info("break here")
                 continue
             self.online_asr_proc.insert_audio_chunk(a)
             o = self.online_asr_proc.process_iter(self.connection.metadata)
